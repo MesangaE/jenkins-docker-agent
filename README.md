@@ -60,7 +60,12 @@ ls
 cat jenkins_agent_key
 copy contents of the private key and paste
 Passphrase: fill your passphrase used to generate the SSH key pair (leave empty if you didn’t use one at the previous step) and then press the create button.
-### Provision Agent virtual server
+### Docker container as Jenkins Build agents
+ # SETUP DOCKR REMOTE API
+ # INSTALL AND CONFIGURE DOCKER PLUGIN
+ # CREATE DOCKER AGENT CLOUD
+ # VALIDATE WITH A JOB
+
 for the agent we will setup docker in another vm and thn open a port range ans configure the docker host as a remote API
 build the docker agent image
 configure jenkins to integrate with jenkins-master
@@ -81,17 +86,18 @@ to expose docker API on port 4243
  (ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock $OPTIONS $DOCKER_STORAGE_OPTIONS $DOCKER_ADD_RUNTIMES)
  and add line below
   ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock
-  save configuration changes restart docker service
+  ## save configuration changes restart docker service
   sudo systemctl daemon-reload
   sudo service docker restart
-  ensure that everything is fine
+  ## ensure that everything is fine
   sudo systemctl status docker
   verify that docker host can be accessed on port 4243 with curl command
-    curl http://localhost:4243/version
-   returns;
+    curl http://localhost:4243/version (use publiciIP in the place of localhost)
+   returns; 
   {"Platform":{"Name":""},"Components":[{"Name":"Engine","Version":"20.10.25","Details":{"ApiVersion":"1.41","Arch":"amd64","BuildTime":"2023-12-29T20:38:05.000000000+00:00","Experimental":"false","GitCommit":"5df983c","GoVersion":"go1.20.12","KernelVersion":"5.10.205-195.807.amzn2.x86_64","MinAPIVersion":"1.12","Os":"linux"}},{"Name":"containerd","Version":"1.7.11","Details":{"GitCommit":"64b8a811b07ba6288238eefc14d898ee0b5b99ba"}},{"Name":"runc","Version":"1.1.11","Details":{"GitCommit":"4bccb38cc9cf198d52bebf2b3a90cd14e7af8c06"}},{"Name":"docker-init","Version":"0.19.0","Details":{"GitCommit":"de40ad0"}}],"Version":"20.10.25","ApiVersion":"1.41","MinAPIVersion":"1.12","GitCommit":"5df983c","GoVersion":"go1.20.12","Os":"linux","Arch":"amd64","KernelVersion":"5.10.205-195.807.amzn2.x86_64","BuildTime":"2023-12-29T20:38:05.000000000+00:00"}
-  install git in the docker machine so you can pull the code for the image we will build for the agent so that we can create as many containers we want to work as agents for as many jobs that we want.
-  clone the repo  https://github.com/akannan1087/jenkins-docker-slave.git (send this file to your and change the repo url)
+  ## install git in the docker machine so you can pull the code for the image we will build for the agent so that we can create as many containers we want to work as agents for as many jobs that we want.
+  sudo yum install git 
+  clone the repo  https://github.com/MesangaE/jenkins-docker-agent.git
   ### Build docker image
 cd into jenkins-docker-slave (modify and change name)
 sudo docker build -t my-jenkins-agent .
@@ -100,18 +106,19 @@ sudo docker images
   go to manage jenkins>>manage plugins>>>available plugins>>>docker>>install
   manage jenkins>>manage nodes and clouds>>configure cloud>>add new cloud>>choose docker
   for docker cloud details put dns name of the virtual machine carrying docker using tcp protocol
-  tcp://ec2-54-159-66-167.compute-1.amazonaws.com:4243
+  tcp://ec2-50.17.32.158.compute-1.amazonaws.com:4243
   you donot need to add any secret credentials
   enable and test connection
   ### add docker templates
-  enter template name in this case Docker-Agent for consistency
+  enter template name in this case docker for consistency
   enable it
   enter the name of the image we created
   remote file system root : /home/jenkins
-  keep it at use this node as possible
+  keep it at 'use this node as much as possible'
+  name and labels: docker-agent
   connect method in this case is SSH but you can also go with the JNLP method
-  i had already included the SSH key so i added that
-  we will go with 'known hosts file verification strategy'
-  pull strategy is never pull since we are already working with our own image that will provision agents as needed.
+  ## note that .ssh directory with key that you generated should be in the repo
+  we will go with 'non verifying verification strategy'
+  pull strategy: never pull (since we are already working with our own image that will provision agents as needed.)
   apply and save
   run a freestyle job to see!!
