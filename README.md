@@ -1,13 +1,14 @@
 # jenkins-docker-agent
 
-this repo contains Dockerfile for creating custom Jenkins docker slave.
-you need to download the code and perform docker build.
+
+this repo contains a Dockerfile for creating a custom Jenkins docker slave.
+you need to download the code and perform a docker build.
 
 
-launc jenkins server (ubuntu 15Gib and open port 8080 on SG) or pull a jenkins image
-connect to instance and update and edit the /etc/hostname file to Jenkins-Master (name given to instance on launch)
+launch a server (ubuntu 15Gib and open port 8080 on SG) or pull a jenkins image
+connect to the instance and update and edit the /etc/hostname file to Jenkins-Master (the name given to instance on launch)
 reboot system
-1. update system and install jenkins
+### update the system and install jenkins
 sudo apt update
 sudo apt install fontconfig openjdk-17-jre
 java -version
@@ -39,39 +40,39 @@ sudo apt-get update
 sudo apt-get install jenkins
 sudo systemctl start jenkins
 sudo systemctl enable jenkins"
-for perfeomance and security reasons it is good to always use a controller and agents to run your jobs in jenkins. In this project we will use a vitrual machine and run the agents on docker connecting the agents to the controller via SSH
+## for performance and security reasons it is good to always use a controller and agents to run your jobs in jenkins. In this project, we will use a virtual machine and run the agents on docker connecting the agents to the controller via SSH
 To run this guide you will need a machine with:
 Java installation
 Jenkins installation
 Docker installation
 SSH key pair
-on either of the machines we will generate the SSH key. I will use the jenkins-master server.
+on either of the machines, we will generate the SSH key. I will use the Jenkins-master server.
    ssh-keygen -f ~/.ssh/jenkins_agent_key
 then go to the jenkins dashboard >>>>manage jenkins>>>>manage credentials
 from global items select Add credentials
 Fill in the form:
-Kind: SSH Username with private key;
+Kind: SSH Username with the private key;
 id: jenkins
-description: The jenkins ssh key
+description: The Jenkins SSH key
 username: jenkins
 Private Key: select Enter directly and press the Add button to insert the content of your private key file at ~/.ssh/jenkins_agent_key. if you don't get access go to the directory directly
 cd .ssh 
 ls
 cat jenkins_agent_key
 copy contents of the private key and paste
-Passphrase: fill your passphrase used to generate the SSH key pair (leave empty if you didn’t use one at the previous step) and then press the create button.
+Passphrase: fill in your passphrase used to generate the SSH key pair (leave empty if you didn’t use one in the previous step) and then press the create button.
 ### Docker container as Jenkins Build agents
  # SETUP DOCKR REMOTE API
  # INSTALL AND CONFIGURE DOCKER PLUGIN
  # CREATE DOCKER AGENT CLOUD
  # VALIDATE WITH A JOB
 
-for the agent we will setup docker in another vm and thn open a port range ans configure the docker host as a remote API
+for the agent, we will set docker up in another instance and then open a port range and configure the docker host as a remote API
 build the docker agent image
-configure jenkins to integrate with jenkins-master
+configure jenkins to integrate with Jenkins-master
 configure docker agent templates
 run a freestyle job to test
-on amazon linux machine
+on Amazon Linux machine
   sudo yum update -y
  sudo yum install docker -y
  sudo systemctl start docker
@@ -98,27 +99,27 @@ to expose docker API on port 4243
   ## install git in the docker machine so you can pull the code for the image we will build for the agent so that we can create as many containers we want to work as agents for as many jobs that we want.
   sudo yum install git 
   clone the repo  https://github.com/MesangaE/jenkins-docker-agent.git
-  ### Build docker image
-cd into jenkins-docker-slave (modify and change name)
+  ### Build a docker image
+cd into jenkins-docker-slave (modify and change the name)
 sudo docker build -t my-jenkins-agent .
 sudo docker images
   ### login to jenkins dashboard to configure jenkins with docker plugins
   go to manage jenkins>>manage plugins>>>available plugins>>>docker>>install
   manage jenkins>>manage nodes and clouds>>configure cloud>>add new cloud>>choose docker
-  for docker cloud details put dns name of the virtual machine carrying docker using tcp protocol
+  for docker, cloud details put DNS name of the virtual machine carrying docker using tcp protocol
   tcp://ec2-50.17.32.158.compute-1.amazonaws.com:4243
-  you donot need to add any secret credentials
+  you do not need to add any secret credentials
   enable and test connection
-  ### add docker templates
+  ### Add docker templates
   enter template name in this case docker for consistency
   enable it
   enter the name of the image we created
-  remote file system root : /home/jenkins
+  remote file system root: /home/jenkins
   keep it at 'use this node as much as possible'
   name and labels: docker-agent
   connect method in this case is SSH but you can also go with the JNLP method
-  ## note that .ssh directory with key that you generated should be in the repo
-  we will go with 'non verifying verification strategy'
-  pull strategy: never pull (since we are already working with our own image that will provision agents as needed.)
+  ## Note that the .ssh directory with a key that you generated should be in the repo
+  we will go with a 'non-verifying verification strategy'
+  pull strategy: never pull (since we are already working with our image that will provision agents as needed.)
   apply and save
   run a freestyle job to see!!
